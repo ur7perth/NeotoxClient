@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "package": "net.neotox.client.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "client": [
+    "ItemEntityRendererMixin",
+    "HeldItemRendererMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
