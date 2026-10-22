@@ -6,6 +6,7 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
+import net.minecraft.client.MinecraftClient;
 
 import org.lwjgl.glfw.GLFW;
 
@@ -15,10 +16,8 @@ public final class NeotoxClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        // تحميل الإعدادات المحفوظة
         ClientConfig.load();
 
-        // تسجيل زر فتح القائمة
         menuKey = KeyBindingHelper.registerKeyBinding(
                 new KeyBinding(
                         "key.neotoxclient.open_menu",
@@ -28,19 +27,16 @@ public final class NeotoxClient implements ClientModInitializer {
                 )
         );
 
-        // الاستجابة لضغط الزر
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (menuKey.wasPressed()) {
-                if (client.player == null) {
-                    continue;
-                }
-
-                if (client.currentScreen == null) {
-                    client.setScreen(new NeotoxScreen());
-                } else if (client.currentScreen instanceof NeotoxScreen) {
+                if (client.currentScreen instanceof NeotoxScreen) {
                     client.setScreen(null);
+                } else {
+                    client.setScreen(new NeotoxScreen());
                 }
             }
         });
+
+        System.out.println("[NeotoxClient] Initialized successfully!");
     }
 }
