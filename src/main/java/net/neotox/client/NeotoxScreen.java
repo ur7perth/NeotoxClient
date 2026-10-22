@@ -31,7 +31,7 @@ public final class NeotoxScreen extends Screen {
     protected void init() {
         clearChildren();
 
-        int left = width / 2 - 190;
+        int left = width / 2 - 170;
         int top = height / 2 - 135;
 
         for (int i = 0; i < CATEGORIES.length; i++) {
@@ -53,12 +53,10 @@ public final class NeotoxScreen extends Screen {
             );
         }
 
-        if (page == 0) {
-            buildItemsPage(left, top);
-        } else if (page == 4) {
-            buildConfigPage(left, top);
-        } else {
-            addDrawableChild(
+        switch (page) {
+            case 0 -> buildItemsPage(left, top);
+            case 4 -> buildConfigPage(left, top);
+            default -> addDrawableChild(
                     ButtonWidget.builder(
                             Text.literal("No modules added yet"),
                             button -> {
@@ -93,17 +91,20 @@ public final class NeotoxScreen extends Screen {
         );
         y += 27;
 
-        addDrawableChild(
-                new ValueSlider(
-                        x, y, 270, 20,
-                        "Swing speed",
-                        ClientConfig.swingSpeedValue,
-                        0, 20,
-                        value -> ClientConfig.swingSpeedValue = value,
-                        false
-                )
-        );
-        y += 30;
+        if (ClientConfig.swingSpeed) {
+            addDrawableChild(
+                    new ValueSlider(
+                            x, y, 270, 20,
+                            "Swing speed",
+                            ClientConfig.swingSpeedValue,
+                            0, 20,
+                            value -> ClientConfig.swingSpeedValue =
+                                    (float) value,
+                            false
+                    )
+            );
+            y += 29;
+        }
 
         addToggle(
                 "Drops",
@@ -111,62 +112,79 @@ public final class NeotoxScreen extends Screen {
                 value -> ClientConfig.drops = value,
                 x, y
         );
-        y += 29;
+        y += 27;
 
-        addDrawableChild(
-                ButtonWidget.builder(
-                        Text.literal(
-                                "Drop mode: "
-                                        + ClientConfig.dropMode.name()
-                        ),
-                        button -> {
-                            ClientConfig.dropMode =
-                                    ClientConfig.dropMode
-                                            == ClientConfig.DropMode.TWO_D
-                                    ? ClientConfig.DropMode.THREE_D
-                                    : ClientConfig.DropMode.TWO_D;
+        if (ClientConfig.drops) {
+            addDrawableChild(
+                    ButtonWidget.builder(
+                            Text.literal(
+                                    "Mode: " + getDropModeName()
+                            ),
+                            button -> {
+                                ClientConfig.dropMode =
+                                        ClientConfig.dropMode
+                                                == ClientConfig.DropMode.TWO_D
+                                        ? ClientConfig.DropMode.THREE_D
+                                        : ClientConfig.DropMode.TWO_D;
 
-                            button.setMessage(
-                                    Text.literal(
-                                            "Drop mode: "
-                                                    + ClientConfig.dropMode.name()
-                                    )
-                            );
+                                button.setMessage(
+                                        Text.literal(
+                                                "Mode: " + getDropModeName()
+                                        )
+                                );
 
-                            ClientConfig.save();
-                        }
-                ).dimensions(x, y, 270, 20).build()
-        );
-        y += 26;
+                                ClientConfig.save();
+                            }
+                    ).dimensions(x, y, 270, 20).build()
+            );
+            y += 26;
 
-        addDrawableChild(
-                new ValueSlider(
-                        x, y, 270, 20,
-                        "Scale",
-                        ClientConfig.dropScale,
-                        1, 10,
-                        value -> ClientConfig.dropScale = value,
-                        true
-                )
-        );
+            addDrawableChild(
+                    new ValueSlider(
+                            x, y, 270, 20,
+                            "Scale",
+                            ClientConfig.dropScale,
+                            1, 10,
+                            value -> ClientConfig.dropScale =
+                                    (float) value,
+                            true
+                    )
+            );
+        }
+    }
+
+    private String getDropModeName() {
+        return ClientConfig.dropMode
+                == ClientConfig.DropMode.TWO_D
+                ? "2D"
+                : "3D";
     }
 
     private void buildConfigPage(int x, int y) {
         addDrawableChild(
                 ButtonWidget.builder(
-                        Text.literal(
-                                "Change menu key in Options > Controls"
-                        ),
-                        button -> {
-                        }
-                ).dimensions(x, y, 300, 22).build()
+                        Text.literal("Save configuration"),
+                        button -> ClientConfig.save()
+                ).dimensions(x, y, 220, 22).build()
         );
 
         addDrawableChild(
                 ButtonWidget.builder(
-                        Text.literal("Save configuration"),
-                        button -> ClientConfig.save()
-                ).dimensions(x, y + 30, 180, 22).build()
+                        Text.literal("Reset configuration"),
+                        button -> {
+                            ClientConfig.staticItems = false;
+                            ClientConfig.oldAnimation = false;
+                            ClientConfig.swingSpeed = false;
+                            ClientConfig.swingSpeedValue = 10.0F;
+                            ClientConfig.drops = false;
+                            ClientConfig.dropMode =
+                                    ClientConfig.DropMode.THREE_D;
+                            ClientConfig.dropScale = 1.0F;
+
+                            ClientConfig.save();
+                            clearAndInit();
+                        }
+                ).dimensions(x, y + 30, 220, 22).build()
         );
     }
 
@@ -189,7 +207,9 @@ public final class NeotoxScreen extends Screen {
 
                     setter.set(enabled);
                     widget.setMessage(toggleText(name, enabled));
+
                     ClientConfig.save();
+                    clearAndInit();
                 }
         ).dimensions(x, y, 270, 22).build();
 
@@ -211,7 +231,7 @@ public final class NeotoxScreen extends Screen {
     ) {
         renderBackground(context);
 
-        int left = width / 2 - 190;
+        int left = width / 2 - 170;
         int top = height / 2 - 145;
 
         context.fill(
@@ -285,7 +305,8 @@ public final class NeotoxScreen extends Screen {
             super(
                     x, y, width, height,
                     Text.literal(label),
-                    (value - min) / (max - min)
+                    Math.max(0.0, Math.min(1.0,
+                            (value - min) / (max - min)))
             );
 
             this.label = label;
